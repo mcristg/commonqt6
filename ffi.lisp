@@ -217,6 +217,13 @@
   (define-qlist-marshaller-funcs qkeysequence)
   (define-qlist-marshaller-funcs extraselection))
 
+  ;; QPoint list marshalling
+  (defcfun "sw_qlist_qpoint_new" :pointer)
+  (defcfun "sw_qlist_qpoint_delete" :void (qlist :pointer))
+  (defcfun "sw_qlist_qpoint_size" :int (qlist :pointer))
+  (defcfun "sw_qlist_qpoint_at" :pointer (qlist :pointer) (index :int))
+  (defcfun "sw_qlist_qpoint_append" :void (qlist :pointer) (var :pointer))
+
 (cffi:defcstruct SmokeData
   (name (:string :encoding :ascii))
   (classes :pointer)

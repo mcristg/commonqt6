@@ -508,3 +508,33 @@ DEFINE_QLIST_SCALAR_MARSHALLER(QByteArray, qbytearray)
 DEFINE_QLIST_SCALAR_MARSHALLER(QModelIndex, qmodelindex)
 DEFINE_QLIST_SCALAR_MARSHALLER(QKeySequence, qkeysequence)
 DEFINE_QLIST_SCALAR_MARSHALLER(QTextEdit::ExtraSelection, extraselection)
+// QList<QPoint> marshalling
+void*
+sw_qlist_qpoint_new()
+{
+    return new QList<QPoint>;
+}
+int
+sw_qlist_qpoint_size(void *ptr)
+{
+    QList<QPoint>* qlist = static_cast<QList<QPoint>*>(ptr);
+    return qlist->size();
+}
+void
+sw_qlist_qpoint_delete(void *ptr)
+{
+    QList<QPoint>* qlist = static_cast<QList<QPoint>*>(ptr);
+    delete qlist;
+}
+const void*
+sw_qlist_qpoint_at(void *ptr, int index)
+{
+    QList<QPoint>* qlist = static_cast<QList<QPoint>*>(ptr);
+    return &qlist->at(index);
+}
+void
+sw_qlist_qpoint_append(void *ptr, void *whatptr)
+{
+    QList<QPoint>* qlist = static_cast<QList<QPoint>*>(ptr);
+    qlist->append(*static_cast<QPoint*>(whatptr));
+}

@@ -35,14 +35,14 @@
 ;;; unvarianted by calling toClass on them.  UNVARIANT-MAP builds an
 ;;; array from *UNVARIANT-TYPES*, indexed by QVariant type-codes and
 ;;; containing functions which will call appropriate toClass methods.
-;;; 
+;;;
 ;;; Classes which are from QtGui don't have such methods, so they are
 ;;; unvarianted by calling constData, constData returns a raw pointer,
 ;;; so we need to know which class it belongs to.
 ;;; UNVARIANT-NON-CORE-MAP makes an array from
 ;;; *UNVARIANT-NON-CORE-TYPES*, it's indexed by the type-code of the
 ;;; variant and has classes as elements.
-;;; 
+;;;
 ;;; Making a QVariant from an object is easier, just need to call
 ;;; (#_new QVariant type-code object). VARIANT-MAP builds a map from
 ;;; classes to type-codes.
@@ -108,7 +108,11 @@
       (qobject
        (iter (for (code . type) in (variant-map))
          (when (qtypep value type)
-           (return (#_new QVariant code (qobject-pointer value))))
+           ;; Qt6: prefer direct QVariant construction from the object itself.
+           ;; This is the most compatible and clean approach for Qt6 bindings
+           ;; where the value type is registered and a constructor taking the
+           ;; specific class reference exists.
+           (return (#_new QVariant value)))
          (finally (return value)))))))
 
 (defun %unvariant (unvariant-map variant type)
