@@ -213,6 +213,19 @@
 (defmarshal (value :|QString*| :around cont :type string)
   (funcall cont (sw_make_qstring value)))
 
+;;; QAnyStringView support - Qt 6.4+ uses this for many string parameters
+;;; We create a holder that contains both a QString and a QAnyStringView pointing to it
+(defmarshal (value (:|QAnyStringView| :|const QAnyStringView&|) :around cont :type string)
+  (let ((holder (sw_make_qanystringview value)))
+    (unwind-protect
+         (funcall cont (sw_qanystringview_ptr holder))
+      (sw_delete_qanystringview holder))))
+
+(defmarshal-override (value (:|QAnyStringView| :|const QAnyStringView&|) :type string)
+  ;; For override return values, create a holder - caller is responsible for cleanup
+  (let ((holder (sw_make_qanystringview value)))
+    (sw_qanystringview_ptr holder)))
+
 (defmarshal (value (:|unsigned char*| :|const char*|) :around cont :type string)
   (let ((char* (cffi:foreign-string-alloc value :encoding :utf-8)))
     (unwind-protect

@@ -152,6 +152,10 @@
   `(setf (gethash ,type *marshalling-tests*)
          #'(lambda (,var) ,@body)))
 
+;; Register marshalling test so can-marshal-p knows strings can be marshalled to QAnyStringView
+(define-marshalling-test (value :|QAnyStringView|)
+  (stringp value))
+
 (defun can-marshal-p (lisp-object <type>)
   (let ((slot (qtype-stack-item-slot <type>)))
     (alexandria:if-let ((test (gethash (qtype-interned-name
@@ -181,8 +185,7 @@
             ((type= (qtype-deconstify <type>)
                     (with-cache () (find-qtype "QByteArray")))
              (typep lisp-object 'string))
-            ((or (type= <type> (with-cache () (find-qtype "QVector<unsigned int>")))
-                 (type= <type> (with-cache () (find-qtype "const QVector<unsigned int>"))))
+            ((or (type= <type> (with-cache () (find-qtype "QList<unsigned int>"))))
              (typep lisp-object 'qvector-unsigned-int))
             ((typep lisp-object 'qthread)
              (type= <type> (with-cache () (find-qtype "QThread*"))))))))

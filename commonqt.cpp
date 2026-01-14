@@ -261,6 +261,33 @@ sw_delete_qstring(void* q)
     delete (QString*)q;
 }
 
+// QAnyStringView support - we store a QString internally because QAnyStringView
+// is a non-owning view that needs the source data to stay alive
+struct QAnyStringViewHolder {
+    QString str;
+    QAnyStringView view;
+    QAnyStringViewHolder(const char* s) : str(QString::fromUtf8(s)), view(str) {}
+};
+
+void*
+sw_make_qanystringview(char* str)
+{
+    return new QAnyStringViewHolder(str);
+}
+
+void
+sw_delete_qanystringview(void* q)
+{
+    delete (QAnyStringViewHolder*)q;
+}
+
+// Helper to get the actual QAnyStringView pointer for marshalling
+void*
+sw_qanystringview_ptr(void* holder)
+{
+    return &(((QAnyStringViewHolder*)holder)->view);
+}
+
 void*
 sw_make_metaobject_builder(char* name, void* parent){
     QMetaObject* qParent = (QMetaObject*)parent;

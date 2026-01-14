@@ -940,28 +940,56 @@
     (reload)))
 
 (defun ensure-smoke (name)
-  (let ((name (string-downcase name)))
-    (load-library (format NIL "smoke~a" name))
-    (initialize-smoke name)))
+  (let* ((name (string-downcase name))
+         ;; Normalize to a module name (e.g. "qt6core"). Accept inputs like
+         ;; "qtcore", "qt6core", "smokeqtcore", or "smokeqt6core".
+         (module-name
+           (let ((n name))
+             ;; Strip "smoke" prefix if present
+             (when (and (>= (length n) 5) (string= (subseq n 0 5) "smoke"))
+               (setf n (subseq n 5)))
+             ;; Ensure we have qt6 (not qt) in the name
+             (ppcre:regex-replace "^qt(?!6)" n "qt6")))
+         ;; Build the library name: smokeqt6...
+         (lib-name (format nil "smoke~a" module-name)))
+    (load-library lib-name)
+    (initialize-smoke module-name)))
 
 (defun initialize-smoke (name)
   (ensure-loaded)
-  (let ((name (string-downcase name)))
-    (unless (named-module-number name)
+  ;; Accept either a module name or a library-like name and normalize it
+  ;; to the module name used for symbol lookups (e.g. "qt6core").
+  (let* ((name (string-downcase name))
+         (module-name
+           (let ((n name))
+             ;; Strip "smoke" prefix if present
+             (when (and (>= (length n) 5) (string= (subseq n 0 5) "smoke"))
+               (setf n (subseq n 5)))
+             ;; Ensure we have qt6 (not qt) in the name
+             (ppcre:regex-replace "^qt(?!6)" n "qt6"))))
+    (unless (named-module-number module-name)
       (let ((idx *n-modules*))
         (unless (< idx (length *module-table*))
           (error "Sorry, +module-bits+ exceeded"))
-        (let ((init (cffi:foreign-symbol-pointer
-                     (format nil "init_~A_Smoke" name))))
-          (assert init)
+        (let* ((candidates
+                 (list
+                  (format nil "init_~A_Smoke" module-name)
+                  (format nil "init_smoke~A_Smoke" module-name)))
+               (init (loop for sym-name in candidates
+                           for ptr = (cffi:foreign-symbol-pointer sym-name)
+                           when ptr return ptr)))
+          (unless init
+            (error "Failed to find any init symbol for module ~A; tried: ~{~A~^, ~}"
+                   module-name candidates))
           (cffi:foreign-funcall-pointer init () :void))
         (let ((smoke-struct
                 (cffi:mem-ref (cffi:foreign-symbol-pointer
-                               (format nil "~A_Smoke" name))
+                               (format nil "~A_Smoke" module-name))
                               :pointer))
               (data (cffi:foreign-alloc '(:struct SmokeData))))
           (setf (svref *module-table* idx) smoke-struct)
           (setf (svref *module-data-table* idx) data)
+          (setf (cffi:foreign-slot-value data '(:struct SmokeData) 'name) module-name)
           (sw_smoke smoke-struct
                     data
                     (cffi:callback deletion-callback)

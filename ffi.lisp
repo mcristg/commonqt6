@@ -71,6 +71,15 @@
 (defcfun "sw_delete_qstring" :void
   (qstring :pointer))
 
+(defcfun "sw_make_qanystringview" :pointer
+  (str (:string :encoding :utf-8)))
+
+(defcfun "sw_delete_qanystringview" :void
+  (holder :pointer))
+
+(defcfun "sw_qanystringview_ptr" :pointer
+  (holder :pointer))
+
 (defcfun "sw_qstringlist_new" :pointer)
 
 (defcfun "sw_qstringlist_delete" :void
