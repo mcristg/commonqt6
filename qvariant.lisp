@@ -48,51 +48,57 @@
 ;;; classes to type-codes.
 
 (defparameter *unvariant-non-core-types*
-  '("Bitmap" "Brush" "Color" "Cursor" "Font" "Icon" "Image" "KeySequence"
-    "Matrix4x4" "Palette" "Pen" "Pixmap" "Polygon" "Quaternion" "Region"
-    "SizePolicy" "TextFormat" "TextLength" "Transform" "Vector2D" "Vector3D"
-    "Vector4D"))
+  '("QBitmap" "QBrush" "QColor" "QCursor" "QFont" "QIcon" "QImage" "QKeySequence"
+    "QMatrix4x4" "QPalette" "QPen" "QPixmap" "QPolygon" "QQuaternion" "QRegion"
+    "QSizePolicy" "QTextFormat" "QTextLength" "QTransform" "QVector2D" "QVector3D"
+    "QVector4D"))
 
 (defparameter *unvariant-types*
-  '("Bool" "Int" "UInt" "LongLong" "ULongLong" "Double" "Char" "Map" "List"
-    "String" "StringList" "ByteArray" "BitArray" "Date" "Time" "DateTime" "Url"
-    "Locale" "Rect" "RectF" "Size" "SizeF" "Line" "LineF" "Point" "PointF"
-    "RegExp" "Hash" "EasingCurve"))
+  '(("Bool" "toBool") ("Int" "toInt") ("UInt" "toUInt") ("LongLong" "toLongLong")
+    ("ULongLong" "toULongLong") ("Double" "toDouble") ("Char" "toChar")
+    ("QVariantMap" "toMap") ("QVariantList" "toList") ("QString" "toString")
+    ("QStringList" "toStringList") ("QByteArray" "toByteArray") ("QBitArray" "toBitArray")
+    ("QDate" "toDate") ("QTime" "toTime") ("QDateTime" "toDateTime") ("QUrl" "toUrl")
+    ("QLocale" "toLocale") ("QRect" "toRect") ("QRectF" "toRectF") ("QSize" "toSize")
+    ("QSizeF" "toSizeF") ("QLine" "toLine") ("QLineF" "toLineF") ("QPoint" "toPoint")
+    ("QPointF" "toPointF") ("QRegularExpression" "toRegularExpression") ("QVariantHash" "toHash")
+    ("QEasingCurve" "toEasingCurve")))
 
-(defparameter *variant-types*
-  (append '("ByteArray" "BitArray" "Date" "Time" "DateTime" "Url" "Char"
-            "Locale" "Rect" "RectF" "Size" "SizeF" "Line" "LineF" "Point" "PointF"
-            "RegExp" "EasingCurve")
+(defparameter *qmetatypes*
+  (append '("QByteArray" "QBitArray" "QDate" "QTime" "QDateTime" "QUrl" "QChar"
+            "QLocale" "QRect" "QRectF" "QSize" "QSizeF" "QLine" "QLineF" "QPoint" "QPointF"
+            "QRegularExpression" "QEasingCurve")
           *unvariant-non-core-types*))
 
 (defun variant-map ()
   (with-cache ()
-    (loop for type in *variant-types*
-          for full-name = (format nil "Q~a" type)
-          for class = (find-qclass full-name nil)
+    (loop for type in *qmetatypes*
+          for class = (find-qclass type nil)
           when class
-          collect (cons (enum-value
-                         (interpret-call "QVariant" type))
-                        class))))
+            collect (cons (enum-value
+			   (interpret-call "QMetaType" type))
+                          class))))
 
 (defun unvariant-map ()
-  (let ((new-map (make-array (1+ (length *unvariant-types*)))))
-    (setf (aref new-map 0) #'identity) ;; Leave invalid QVariant as it is
-    (loop for type in *unvariant-types*
-          for enum = (enum-value
-                      (interpret-call "QVariant" type))
-          do (setf (aref new-map enum)
-                   (format nil "to~a" type)))
-    new-map))
+  (with-cache ()
+    (let ((new-map (make-hash-table)))
+      ;; Leave invalid QVariant as it is
+      (setf (gethash 0 new-map) #'identity)
+      (loop for (type method) in *unvariant-types*
+            for enum = (enum-value
+			(interpret-call "QMetaType" type))
+            do (setf (gethash enum new-map)
+                     method))
+      new-map)))
 
 (defun unvariant-non-core-map ()
   (with-cache ()
-    (let ((new-map (make-array 200)))
+    (let ((new-map (make-hash-table)))
       (loop for type in *unvariant-non-core-types*
             for enum = (enum-value
-                        (interpret-call "QVariant" type))
-            do (setf (aref new-map enum)
-                     (find-qclass (format nil "Q~a" type))))
+                        (interpret-call "QMetaType" type))
+            do (setf (gethash enum new-map)
+                     (find-qclass type)))
       new-map)))
 
 (defun qvariant (value)
@@ -108,31 +114,28 @@
       (qobject
        (iter (for (code . type) in (variant-map))
          (when (qtypep value type)
-           ;; Qt6: prefer direct QVariant construction from the object itself.
-           ;; This is the most compatible and clean approach for Qt6 bindings
-           ;; where the value type is registered and a constructor taking the
-           ;; specific class reference exists.
-           (return (#_new QVariant value)))
+           (return (with-objects ((type (#_new QMetaType code)))
+		     (#_new QVariant type (qobject-pointer value)))))
          (finally (return value)))))))
 
 (defun %unvariant (unvariant-map variant type)
-  (let ((function (aref unvariant-map type)))
+  (let ((function (gethash type unvariant-map)))
     (when (stringp function)
       (setf function
             (compile nil `(lambda (x)
                             (optimized-call nil x ,function)))
-            (aref unvariant-map type) function))
+            (gethash type unvariant-map) function))
     (funcall function variant)))
 
 (defun unvariant (variant &optional (type (find-qtype "QVariant")))
   (let* ((qobject (%qobject (qtype-class type) variant))
-         (code (enum-value (#_type qobject)))
+         (code (#_typeId qobject))
          (unvariant-map (unvariant-map)))
-    (if (array-in-bounds-p unvariant-map code)
-        (%unvariant unvariant-map qobject code)
-        (let* ((unvariant-map (unvariant-non-core-map))
-               (class (and (array-in-bounds-p unvariant-map code)
-                           (aref unvariant-map code))))
-          (if class
-              (%qobject class  (#_constData qobject))
-              qobject)))))
+    (let ((method (and unvariant-map (gethash code unvariant-map))))
+      (if method
+          (%unvariant unvariant-map qobject code)
+          (let* ((non-core-map (unvariant-non-core-map))
+                 (class (and non-core-map (gethash code non-core-map))))
+            (if class
+                (%qobject class (#_constData qobject))
+                qobject))))))
