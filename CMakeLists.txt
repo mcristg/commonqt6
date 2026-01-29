@@ -66,12 +66,20 @@ include_directories(${Qt_ROOT_DIR}/include/QtCore/${QT_CORE_VERSION}
 
 link_directories(${SMOKE_BASE}/lib ${SMOKE_QT}/lib)
 
-add_library(${COMMONQT} SHARED commonqt.cpp)
+# Qt6: also compile std::function bridge code into the main library
+set(COMMONQT_SOURCES commonqt.cpp)
+if (Qt6_FOUND)
+   list(APPEND COMMONQT_SOURCES qwebengine-std-function.cpp)
+endif()
+
+add_library(${COMMONQT} SHARED ${COMMONQT_SOURCES})
 
 target_include_directories(${COMMONQT} BEFORE PRIVATE ${Qt_ROOT_DIR}/include/QtCore/${QT_CORE_VERSION}/QtCore/private)
 
 if (Qt6_FOUND)
-   target_link_libraries(${COMMONQT} smokeqt6core smokebase ${QT_VERSION}::Widgets ${QT_VERSION}::PrintSupport)
+   # Ensure WebEngineCore target is available
+   find_package(${QT_VERSION} COMPONENTS WebEngineCore REQUIRED)
+   target_link_libraries(${COMMONQT} smokeqt6core smokebase ${QT_VERSION}::Widgets ${QT_VERSION}::PrintSupport ${QT_VERSION}::WebEngineCore)
 else()
    target_link_libraries(${COMMONQT} smokeqtcore smokebase ${QT_VERSION}::Widgets ${QT_VERSION}::PrintSupport)
 endif()

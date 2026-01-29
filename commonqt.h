@@ -1,4 +1,10 @@
 #ifdef __cplusplus
+/* Forward declarations for C++ types referenced below */
+class QMetaObject;
+class DynamicBinding;
+class Binding;
+/* Forward declaration for Smoke (C struct used by Smoke bindings) */
+typedef struct Smoke Smoke;
 extern "C" {
 #endif
 
@@ -10,7 +16,7 @@ extern "C" {
 
 class DynamicBinding;
 class Binding;
-  
+
 typedef struct SmokeData {
 	const char *name;
 
@@ -93,6 +99,7 @@ EXPORT void sw_qlist_void_append(void*, void*);
   EXPORT const void* sw_qlist_##NAME##_at(void *ptr, int index); \
   EXPORT void sw_qlist_##NAME##_append(void *ptr, void *whatptr);
 
+DECLARE_QLIST_SCALAR_MARSHALLER(qpoint)
 DECLARE_QLIST_SCALAR_MARSHALLER(int)
 DECLARE_QLIST_SCALAR_MARSHALLER(papersize)
 DECLARE_QLIST_SCALAR_MARSHALLER(qvariant)
@@ -100,7 +107,6 @@ DECLARE_QLIST_SCALAR_MARSHALLER(qbytearray)
 DECLARE_QLIST_SCALAR_MARSHALLER(qmodelindex)
 DECLARE_QLIST_SCALAR_MARSHALLER(qkeysequence)
 DECLARE_QLIST_SCALAR_MARSHALLER(extraselection)
-DECLARE_QLIST_SCALAR_MARSHALLER(qpoint)
 
 #ifdef __cplusplus
 }
