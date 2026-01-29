@@ -155,6 +155,9 @@
   (smoke** :pointer)
   (index** :pointer))
 
+(defcfun "sw_smoke_name" :string
+  (smoke :pointer))
+
 (defcfun "sw_id_method" :short
   (smoke :pointer)
   (class :short)

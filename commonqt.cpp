@@ -291,7 +291,7 @@ sw_qanystringview_ptr(void* holder)
 void*
 sw_make_metaobject_builder(char* name, void* parent){
     QMetaObject* qParent = (QMetaObject*)parent;
-        
+
     QMetaObjectBuilder* builder = new QMetaObjectBuilder();
 
     builder->setClassName(name);
@@ -317,19 +317,19 @@ sw_add_method_to_metaobject_builder(void* p, char* signature) {
 
 void
 sw_add_signal_to_metaobject_builder(void* p, char* signature) {
-    QMetaObjectBuilder* builder = (QMetaObjectBuilder*)p; 
+    QMetaObjectBuilder* builder = (QMetaObjectBuilder*)p;
     builder->addSignal(signature);
 }
 
 void
 sw_add_slot_to_metaobject_builder(void* p, char* signature) {
-    QMetaObjectBuilder* builder = (QMetaObjectBuilder*)p; 
+    QMetaObjectBuilder* builder = (QMetaObjectBuilder*)p;
     builder->addSlot(signature);
 }
 
 void*
 sw_make_metaobject(void* p)
-{      
+{
     QMetaObjectBuilder* builder = (QMetaObjectBuilder*)p;
     return builder->toMetaObject();
 }
@@ -347,32 +347,47 @@ sw_delete(void* p)
     delete q;
 }
 
-typedef void (*t_ptr_callback)(void*);
+/* Ensure these functions have C linkage and are exported */
+extern "C" {
 
-void
+EXPORT void
 sw_find_class(char* name, Smoke** smoke, short* index)
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))	
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
     Smoke::ModuleIndex mi = qt6core_Smoke->findClass(name);
 #else
     Smoke::ModuleIndex mi = qtcore_Smoke->findClass(name);
-#endif	
-    *smoke = mi.smoke;
-    *index = mi.index;
-}
-
-void
-sw_id_instance_class(void* ptr, Smoke** smoke, short* index)
-{
-    const char* className = ((QObject*)ptr)->metaObject()->className();
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))		
-    Smoke::ModuleIndex mi = qt6core_Smoke->findClass(((QObject*)ptr)->metaObject()->className());
-#else
-    Smoke::ModuleIndex mi = qtcore_Smoke->findClass(((QObject*)ptr)->metaObject()->className());
 #endif
     *smoke = mi.smoke;
     *index = mi.index;
 }
+
+EXPORT short
+sw_id_instance_class(void* ptr, Smoke** smoke, short* index)
+{
+    const char* className = ((QObject*)ptr)->metaObject()->className();
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+    Smoke::ModuleIndex mi = qt6core_Smoke->findClass(className);
+#else
+    Smoke::ModuleIndex mi = qtcore_Smoke->findClass(className);
+#endif
+    *smoke = mi.smoke;
+    *index = mi.index;
+    return mi.index;
+}
+
+EXPORT const char*
+sw_smoke_name(Smoke* smoke)
+{
+    if (!smoke)
+        return NULL;
+    return smoke->moduleName();
+}
+
+} /* extern "C" */
+
+typedef void (*t_ptr_callback)(void*);
+
 
 short
 sw_find_name(Smoke* smoke, char* name)

@@ -109,10 +109,13 @@
 
 (declaim (inline module-number))
 (defun module-number (smoke)
-  (position smoke
+  (or (position smoke
             *module-table*
             :test #'cffi:pointer-eq
-            :end *n-modules*))
+            :end *n-modules*)
+      (when smoke
+        (let ((name (sw_smoke_name smoke)))
+          (and name (named-module-number name))))))
 
 (defun named-module-number (name)
   (position name
@@ -120,6 +123,33 @@
             :key (lambda (data)
                    (and data (data-name data)))
             :test #'string=))
+
+;;; Diagnostic helpers ----------------------------------------------------
+
+(defun smoke-info-from-instance (instance)
+  "Return three values: (smoke-address-as-integer index smoke-name)
+for the given INSTANCE pointer by calling sw_id_instance_class. If no
+smoke is found returns (nil nil nil)."
+  (cffi:with-foreign-object (&smoke :pointer)
+    (cffi:with-foreign-object (&index :short)
+      (sw_id_instance_class instance &smoke &index)
+      (let ((smoke-ptr (cffi:mem-ref &smoke :pointer)))
+           (values (and (not (cffi:null-pointer-p smoke-ptr))
+               (cffi:pointer-address smoke-ptr))
+             (cffi:mem-ref &index :short)
+             (and (not (cffi:null-pointer-p smoke-ptr))
+               (sw_smoke_name smoke-ptr)))))))
+
+(defun list-loaded-smokes ()
+  "Return a list of (index smoke-address name) for currently loaded
+Smoke modules known to Lisp."
+  (loop for i from 0 below *n-modules*
+        for smoke = (module-ref i)
+        for data = (data-ref i)
+        collect (list i
+                      (and smoke (cffi:pointer-address smoke))
+                      (and data (data-name data)))))
+
 
 #-qt::debug (declaim (inline bash))
 (defun bash (idx module-number kind)
@@ -241,7 +271,8 @@
                   :format-args (list name)))))))
 
 (defun find-qclass-in-module (<module> name &optional (allow-external t))
-  (declare (type module-number <module>))
+  ;; <module> may be NIL in some caller paths; allow NIL to avoid SBCL style warnings
+  (declare (type (or null module-number) <module>))
   (let ((index (the index-iterator
                  (sw_id_class (module-ref <module>)
                               name
