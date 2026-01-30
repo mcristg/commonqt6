@@ -544,6 +544,19 @@ Smoke modules known to Lisp."
 (deflistify list-qmethod-argument-types map-qmethod-argument-types
   <method>)
 
+(defun qmethod-arglist (<method>)
+  "Return a list of strings naming the argument types for <method>."
+  (mapcar #'qtype-name (list-qmethod-argument-types <method>)))
+
+(defun qmethod-signature (<method>)
+  "Return a human-readable signature string for <method>.
+Example: ~A::~A(int, QString) -> void"
+  (format nil "~A::~A(~{~A~^, ~}) -> ~A"
+          (qclass-name (qmethod-class <method>))
+          (qmethod-name <method>)
+          (mapcar #'qtype-name (list-qmethod-argument-types <method>))
+          (qtype-name (qmethod-return-type <method>))))
+
 (defun qmethod-classfn-index (<method>)
   (cffi:foreign-slot-value (qmethod-struct <method>)
                            '(:struct qMethod)
@@ -788,6 +801,18 @@ Smoke modules known to Lisp."
   (map-methods (lambda (<method>)
                  (when (search str (string-upcase (qmethod-name <method>)))
                    (format t "Method ~A~%" (qmethod-fancy-name <method>))))))
+
+(defun qapropos-signature (str)
+  "Search classes and methods matching STR and print method signatures.
+STR is matched case-insensitively against class names and method names."
+  (setf str (string-upcase str))
+  (map-classes (lambda (<class>)
+                 (let ((name (qclass-name <class>)))
+                   (when (search str (string-upcase name))
+                     (format t "Class ~A~%" name)))))
+  (map-methods (lambda (<method>)
+                 (when (search str (string-upcase (qmethod-name <method>)))
+                   (format t "Method ~A~%" (qmethod-signature <method>))))))
 
 (defun find-qclass-ignoring-case (str)
   (block nil

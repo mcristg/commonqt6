@@ -32,6 +32,7 @@
            #:load-library
            #:ensure-smoke
            #:qapropos
+           #:qapropos-signature
            #:qdescribe
            #:*qapplication*
            #:*qapplication-create-hooks*
