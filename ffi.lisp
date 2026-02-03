@@ -33,9 +33,8 @@
 
 (defun load-libcommonqt ()
   (unless *library-loaded-p*
-    (progn
-      (load-library "commonqt6")
-      (setf *library-loaded-p* t))))
+    (load-library "commonqt6")
+    (setf *library-loaded-p* t)))
 
 #-(or ecl ccl sbcl allegro)
 (load-libcommonqt)
@@ -201,15 +200,15 @@
                           (string-upcase name)))
 
 (macrolet ((define-qlist-marshaller-funcs (type-name)
-               (flet ((func-name (name)
-                        (concatenate 'string "sw_qlist_" (string-downcase type-name)
-                                     "_" (string-downcase name))))
-                 `(progn
-                    (defcfun ,(func-name "new") :pointer)
-                    (defcfun ,(func-name "delete") :void (qlist :pointer))
-                    (defcfun ,(func-name "size") :int (qlist :pointer))
-                    (defcfun ,(func-name "at") :pointer (qlist :pointer) (index :int))
-                    (defcfun ,(func-name "append") :void (qlist :pointer) (var :pointer))))))
+             (flet ((func-name (name)
+                      (concatenate 'string "sw_qlist_" (string-downcase type-name)
+                                   "_" (string-downcase name))))
+               `(progn
+                  (defcfun ,(func-name "new") :pointer)
+                  (defcfun ,(func-name "delete") :void (qlist :pointer))
+                  (defcfun ,(func-name "size") :int (qlist :pointer))
+                  (defcfun ,(func-name "at") :pointer (qlist :pointer) (index :int))
+                  (defcfun ,(func-name "append") :void (qlist :pointer) (var :pointer))))))
   (define-qlist-marshaller-funcs void)
   (define-qlist-marshaller-funcs int)
   (define-qlist-marshaller-funcs papersize)
@@ -217,14 +216,8 @@
   (define-qlist-marshaller-funcs qbytearray)
   (define-qlist-marshaller-funcs qmodelindex)
   (define-qlist-marshaller-funcs qkeysequence)
-  (define-qlist-marshaller-funcs extraselection))
-
-  ;; QPoint list marshalling
-  (defcfun "sw_qlist_qpoint_new" :pointer)
-  (defcfun "sw_qlist_qpoint_delete" :void (qlist :pointer))
-  (defcfun "sw_qlist_qpoint_size" :int (qlist :pointer))
-  (defcfun "sw_qlist_qpoint_at" :pointer (qlist :pointer) (index :int))
-  (defcfun "sw_qlist_qpoint_append" :void (qlist :pointer) (var :pointer))
+  (define-qlist-marshaller-funcs extraselection)
+  (define-qlist-marshaller-funcs qpoint))
 
 (cffi:defcstruct SmokeData
   (name (:string :encoding :ascii))

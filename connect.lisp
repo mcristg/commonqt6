@@ -30,7 +30,7 @@
 (named-readtables:in-readtable :qt)
 
 ;; dynamic slot mechanism is implemented according to
-;;https://doc.qt.io/archives/qq/qq16-dynamicqobject.html
+;; https://doc.qt.io/archives/qq/qq16-dynamicqobject.html
 
 (defun QSIGNAL (str)
   (concatenate 'string "2" str))

@@ -21,7 +21,6 @@
    (:file "qlist")
    (:file "qapp")
    (:file "connect")
-   (:file "image-utils")
    (:file "qt-libs"))
   :defsystem-depends-on (:trivial-features)
   :depends-on (:cffi :named-readtables :cl-ppcre :alexandria

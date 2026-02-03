@@ -343,10 +343,7 @@ sw_delete(void* p)
     delete q;
 }
 
-/* Ensure these functions have C linkage and are exported */
-extern "C" {
-
-EXPORT void
+void
 sw_find_class(char* name, Smoke** smoke, short* index)
 {
     Smoke::ModuleIndex mi = qt6core_Smoke->findClass(name);
@@ -354,7 +351,7 @@ sw_find_class(char* name, Smoke** smoke, short* index)
     *index = mi.index;
 }
 
-EXPORT short
+short
 sw_id_instance_class(void* ptr, Smoke** smoke, short* index)
 {
     const char* className = ((QObject*)ptr)->metaObject()->className();
@@ -364,7 +361,7 @@ sw_id_instance_class(void* ptr, Smoke** smoke, short* index)
     return mi.index;
 }
 
-EXPORT const char*
+const char*
 sw_smoke_name(Smoke* smoke)
 {
     if (!smoke)
@@ -372,10 +369,7 @@ sw_smoke_name(Smoke* smoke)
     return smoke->moduleName();
 }
 
-} /* extern "C" */
-
 typedef void (*t_ptr_callback)(void*);
-
 
 short
 sw_find_name(Smoke* smoke, char* name)

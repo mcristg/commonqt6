@@ -55,7 +55,6 @@
         (t
          (ensure-smoke :qt6core)
          (ensure-smoke :qt6gui)
-         (ensure-smoke :qt6widgets)
          (let ((instance (#_QCoreApplication::instance)))
            (setf *qapplication*
                  (if (null-qobject-p instance)
@@ -121,7 +120,6 @@
   ;;
   (ensure-smoke :qt6core)
   (ensure-smoke :qt6gui)
-  (ensure-smoke :qt6widgets)
   (let ((v (windows-version)))
     (when (and v (< v +vista+))
       (#_QApplication::setStyle "Plastique"))))

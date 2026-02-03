@@ -36,8 +36,7 @@
      (:file "qlist")
      (:file "qapp")
      (:file "connect")
-     (:file "std-function")
-     (:file "image-utils"))))
+     (:file "std-function"))))
   :defsystem-depends-on (:trivial-features)
   :depends-on (:cffi :named-readtables :cl-ppcre :alexandria
                :closer-mop

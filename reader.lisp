@@ -108,42 +108,8 @@
                                ,method-name))
                       (t
                        `(optimized-call t ,(car args) ,method-name
-                                        ,@(cdr args)))))))))))
-  ;; for commonOCCT #!_new
-  (defun read-smoke-lambda1 (stream char n)
-    (declare (ignore char n))
-    (flet ((expand-to (&rest args)
-             `(lambda ()
-                (,@args ,@(qt::read-list-until #\) stream))))
-           (read-name ()
-             (coerce (loop for char = (peek-char nil stream t nil t)
-                           while (or (char= char #\_)
-                                     (char= char #\:)
-                                     (char= char #\~)
-                                     (char<= #\A char #\Z)
-                                     (char<= #\a char #\z)
-                                     (char<= #\0 char #\9)
-                                     (char<= #\< char #\>)) ; < = >
-                           collect (read-char stream t nil t))
-                     'string)))
-      (let ((method-name (read-name)))
-        (when (ppcre:scan "^[<=>]+$" method-name)
-          (setf method-name
-                (concatenate 'string "operator" method-name)))
-        (cond
-          ((equal method-name "_new")
-           (peek-char t stream t nil t)
-           (expand-to '_new (read-name)))
-          (t
-           (let ((args (qt::read-list-until #\) stream)))
-            `(lambda ()
-               ,(cond ((equal method-name "")
-                       `(error "Invalid #_ syntax: \"#_\"" ,method-name))
-                      ((zerop (length args))
-                       `(error "Invalid number of arguments for #_~a: 0."
-                               ,method-name)))))))))))
+                                        ,@(cdr args))))))))))))
 
 (named-readtables:defreadtable :qt
     (:merge :standard)
-  (:dispatch-macro-char #\# #\_ 'read-smoke-lambda)
-  (:dispatch-macro-char #\# #\! 'read-smoke-lambda1))
+  (:dispatch-macro-char #\# #\_ 'read-smoke-lambda))

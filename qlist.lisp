@@ -2,22 +2,7 @@
 
 ;;; marshalling
 
-(defmarshal (value (:|QStringList| :|const QStringList&|) :around cont :type list)
-  (let ((qstringlist (sw_qstringlist_new)))
-    (unwind-protect
-         (progn
-           (dolist (str value)
-             (let ((char* (cffi:foreign-string-alloc str :encoding :utf-8)))
-               (unwind-protect
-                    (sw_qstringlist_append qstringlist char*)
-                 (cffi:foreign-free char*))))
-           (funcall cont qstringlist))
-      (sw_qstringlist_delete qstringlist))))
-
-;; SMOKE may register the templated name "QList<QString>" instead of
-;; the convenience alias "QStringList". Provide marshalling for the
-;; templated name so functions expecting that exact type are handled.
-(defmarshal (value (:|QList<QString>| :|const QList<QString>&|) :around cont :type list)
+(defmarshal (value (:|QStringList| :|const QStringList&| :|QList<QString>| :|const QList<QString>&|) :around cont :type list)
   (let ((qstringlist (sw_qstringlist_new)))
     (unwind-protect
          (progn
@@ -105,28 +90,11 @@
 (define-copyable-object-list-marshaller "QModelIndex")
 (define-copyable-object-list-marshaller "QKeySequence")
 (define-copyable-object-list-marshaller "QTextEdit::ExtraSelection")
-
-;; QList<QPoint> marshalling - QPoint is a value type, not a QObject
-(defmarshal (value (:|QList<QPoint>| :|const QList<QPoint>&|) :around cont :type list)
-  (let ((qlist (sw_qlist_qpoint_new)))
-    (unwind-protect
-         (progn
-           (dolist (v value)
-             ;; v should be a QPoint wrapper (abstract-qobject)
-             (unless (typep v 'abstract-qobject)
-               (error "Cannot marshal list element ~s as QPoint" v))
-             ;; Get the pointer to the QPoint value and append it
-             (sw_qlist_qpoint_append qlist (qobject-pointer v)))
-           (funcall cont qlist))
-      (sw_qlist_qpoint_delete qlist))))
+(define-copyable-object-list-marshaller "QPoint")
 
 ;;; unmarshalling
 
-(def-unmarshal (value "QStringList" type)
-  (iter (for i below (sw_qstringlist_size value))
-        (collect (convert-qstring-data (sw_qstringlist_at value i)))))
-
-(def-unmarshal (value "QList<QString>" type)
+(def-unmarshal (value ("QStringList" "QList<QString>") type)
   (iter (for i below (sw_qstringlist_size value))
         (collect (convert-qstring-data (sw_qstringlist_at value i)))))
 
@@ -187,12 +155,7 @@
 
 (define-copyable-object-list-unmarshaller "QModelIndex")
 (define-copyable-object-list-unmarshaller "QKeySequence")
-
-;; QList<QPoint> unmarshalling
-(def-unmarshal (value "QList<QPoint>" type)
-  (iter (for i below (sw_qlist_qpoint_size value))
-        (collect (%qobject (find-qclass "QPoint")
-                           (sw_qlist_qpoint_at value i)))))
+(define-copyable-object-list-unmarshaller "QPoint")
 
 (def-unmarshal (value "QList<QVariant>" type)
   (iter (for i below (sw_qlist_qvariant_size value))

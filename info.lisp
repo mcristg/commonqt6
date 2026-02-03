@@ -109,13 +109,10 @@
 
 (declaim (inline module-number))
 (defun module-number (smoke)
-  (or (position smoke
+  (position smoke
             *module-table*
             :test #'cffi:pointer-eq
-            :end *n-modules*)
-      (when smoke
-        (let ((name (sw_smoke_name smoke)))
-          (and name (named-module-number name))))))
+            :end *n-modules*))
 
 (defun named-module-number (name)
   (position name
@@ -123,8 +120,6 @@
             :key (lambda (data)
                    (and data (data-name data)))
             :test #'string=))
-
-;;; Diagnostic helpers ----------------------------------------------------
 
 (defun smoke-info-from-instance (instance)
   "Return three values: (smoke-address-as-integer index smoke-name)
@@ -543,19 +538,6 @@ Smoke modules known to Lisp."
 (deflistify list-qmethod-argument-types map-qmethod-argument-types
   <method>)
 
-(defun qmethod-arglist (<method>)
-  "Return a list of strings naming the argument types for <method>."
-  (mapcar #'qtype-name (list-qmethod-argument-types <method>)))
-
-(defun qmethod-signature (<method>)
-  "Return a human-readable signature string for <method>.
-Example: ~A::~A(int, QString) -> void"
-  (format nil "~A::~A(~{~A~^, ~}) -> ~A"
-          (qclass-name (qmethod-class <method>))
-          (qmethod-name <method>)
-          (mapcar #'qtype-name (list-qmethod-argument-types <method>))
-          (qtype-name (qmethod-return-type <method>))))
-
 (defun qmethod-classfn-index (<method>)
   (cffi:foreign-slot-value (qmethod-struct <method>)
                            '(:struct qMethod)
@@ -791,7 +773,7 @@ Example: ~A::~A(int, QString) -> void"
 ;;;; Utilities
 ;;;;
 
-(defun qapropos (str)
+(defun qapropos (str &optional show-signatures-p)
   (setf str (string-upcase str))
   (map-classes (lambda (<class>)
                  (let ((name (qclass-name <class>)))
@@ -799,19 +781,14 @@ Example: ~A::~A(int, QString) -> void"
                      (format t "Class ~A~%" name)))))
   (map-methods (lambda (<method>)
                  (when (search str (string-upcase (qmethod-name <method>)))
-                   (format t "Method ~A~%" (qmethod-fancy-name <method>))))))
-
-(defun qapropos-signature (str)
-  "Search classes and methods matching STR and print method signatures.
-STR is matched case-insensitively against class names and method names."
-  (setf str (string-upcase str))
-  (map-classes (lambda (<class>)
-                 (let ((name (qclass-name <class>)))
-                   (when (search str (string-upcase name))
-                     (format t "Class ~A~%" name)))))
-  (map-methods (lambda (<method>)
-                 (when (search str (string-upcase (qmethod-name <method>)))
-                   (format t "Method ~A~%" (qmethod-signature <method>))))))
+                   (format t "Method ~A~%" (if show-signatures-p
+                                               (format nil "~A::~A(~{~A~^, ~}) -> ~A"
+                                                       (qclass-name (qmethod-class <method>))
+                                                       (qmethod-name <method>)
+                                                       (mapcar #'qtype-name
+                                                               (list-qmethod-argument-types <method>))
+                                                       (qtype-name (qmethod-return-type <method>)))
+                                               (qmethod-fancy-name <method>)))))))
 
 (defun find-qclass-ignoring-case (str)
   (block nil
@@ -830,6 +807,12 @@ STR is matched case-insensitively against class names and method names."
           (qclass-name (qmethod-class <method>))
           (qmethod-name <method>)
           (unbash <method>)))
+
+(defun qmethod-signature (<method>)
+  (format nil "~:[void~;~:*~A~] ~A(~{~A~^,~})"
+	  (qtype-name (qmethod-return-type <method>))
+	  (qmethod-name <method>)
+	  (mapcar #'qtype-name (list-qmethod-argument-types <method>))))
 
 (defun find-dotted-qmethods (str)
   (let ((result '()))
@@ -994,17 +977,19 @@ STR is matched case-insensitively against class names and method names."
   (unless *loaded*
     (reload)))
 
+(defun normalize-module-name (name)
+  ;; Normalize to a module name (e.g. "qt6core"). Accept inputs like
+  ;; "qtcore", "qt6core", "smokeqtcore", or "smokeqt6core".
+  (let ((n name))
+    ;; Strip "smoke" prefix if present
+    (when (and (>= (length n) 5) (string= (subseq n 0 5) "smoke"))
+      (setf n (subseq n 5)))
+    ;; Ensure we have qt6 (not qt) in the name
+    (ppcre:regex-replace "^qt(?!6)" n "qt6")))
+
 (defun ensure-smoke (name)
   (let* ((name (string-downcase name))
-         ;; Normalize to a module name (e.g. "qt6core"). Accept inputs like
-         ;; "qtcore", "qt6core", "smokeqtcore", or "smokeqt6core".
-         (module-name
-           (let ((n name))
-             ;; Strip "smoke" prefix if present
-             (when (and (>= (length n) 5) (string= (subseq n 0 5) "smoke"))
-               (setf n (subseq n 5)))
-             ;; Ensure we have qt6 (not qt) in the name
-             (ppcre:regex-replace "^qt(?!6)" n "qt6")))
+         (module-name (normalize-module-name name))
          ;; Build the library name: smokeqt6...
          (lib-name (format nil "smoke~a" module-name)))
     (load-library lib-name)
@@ -1012,24 +997,15 @@ STR is matched case-insensitively against class names and method names."
 
 (defun initialize-smoke (name)
   (ensure-loaded)
-  ;; Accept either a module name or a library-like name and normalize it
-  ;; to the module name used for symbol lookups (e.g. "qt6core").
   (let* ((name (string-downcase name))
-         (module-name
-           (let ((n name))
-             ;; Strip "smoke" prefix if present
-             (when (and (>= (length n) 5) (string= (subseq n 0 5) "smoke"))
-               (setf n (subseq n 5)))
-             ;; Ensure we have qt6 (not qt) in the name
-             (ppcre:regex-replace "^qt(?!6)" n "qt6"))))
+         (module-name (normalize-module-name name)))
     (unless (named-module-number module-name)
       (let ((idx *n-modules*))
         (unless (< idx (length *module-table*))
           (error "Sorry, +module-bits+ exceeded"))
         (let* ((candidates
                  (list
-                  (format nil "init_~A_Smoke" module-name)
-                  (format nil "init_smoke~A_Smoke" module-name)))
+                  (format nil "init_~A_Smoke" module-name)))
                (init (loop for sym-name in candidates
                            for ptr = (cffi:foreign-symbol-pointer sym-name)
                            when ptr return ptr)))

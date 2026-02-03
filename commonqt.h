@@ -1,21 +1,19 @@
 #ifdef __cplusplus
-/* Forward declarations for C++ types referenced below */
+
+extern "C" {
+        #endif
+
+        #ifdef WIN32
+        #  define EXPORT __declspec(dllexport)
+        #else
+        #  define EXPORT
+        #endif
+
 class QMetaObject;
 class DynamicBinding;
 class Binding;
-/* Forward declaration for Smoke (C struct used by Smoke bindings) */
+
 typedef struct Smoke Smoke;
-extern "C" {
-#endif
-
-#ifdef WIN32
-#  define EXPORT __declspec(dllexport)
-#else
-#  define EXPORT
-#endif
-
-class DynamicBinding;
-class Binding;
 
 typedef struct SmokeData {
 	const char *name;

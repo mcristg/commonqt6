@@ -32,7 +32,6 @@
            #:load-library
            #:ensure-smoke
            #:qapropos
-           #:qapropos-signature
            #:qdescribe
            #:*qapplication*
            #:*qapplication-create-hooks*
@@ -83,7 +82,5 @@
            #:cast
            #:qobject-deleted
            #:with-main-window
-           #:enum-equal
-           #:generate-image-array
-           #:pixmap)
+           #:enum-equal)
   (:import-from alexandria named-lambda))

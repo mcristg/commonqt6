@@ -131,7 +131,7 @@ ninja -j 6 && ninja install
 
 Repo: <https://github.com/commonqt/smokegen>
 
-Branch: clang
+Branch: clang-qt6
 
 ```
 mkdir build && cd build
@@ -161,7 +161,7 @@ Branch: master
 
 ```
 mkdir build && cd build
-cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="Z:\siscog\qt6\commonqt-install" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DSMOKE_QT_VERSION=6 -DQt6_DIR="Z:\siscog\qt6\qt-install\lib\cmake\Qt6" -DQt_ROOT_DIR="Z:\siscog\qt6\qt-install" -DSMOKE_BASE="Z:\siscog\qt6\smokegen-install" -DSMOKE_QT="Z:\siscog\qt6\smokeqt-install"
+cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="..\commonqt-install" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DSMOKE_QT_VERSION=6 -DQt6_DIR="..\qt-install\lib\cmake\Qt6" -DQt_ROOT_DIR="..\qt-install" -DSMOKE_BASE="..\smokegen-install" -DSMOKE_QT="..\smokeqt-install"
 ninja -j 6
 ninja install​
 ```
