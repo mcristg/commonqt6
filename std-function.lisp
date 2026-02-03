@@ -59,38 +59,35 @@
 ;;; ============================================================================
 
 (defun create-std-function-for-lisp-callback (lisp-callback)
-   "Create a std::function wrapper that will invoke a Lisp callback.
+  "Create a std::function wrapper that will invoke a Lisp callback.
 
     Args:
       lisp-callback: a Lisp function to call when the C++ code invokes the callback
 
     Returns: a pointer suitable for passing as a std::function parameter to Qt,
              and an opaque wrapper ID to pass to destroy-std-function-callback later."
-   (let* ((wrapper-id (sb-thread:with-mutex (*std-function-wrapper-lock*)
-                        (incf *std-function-wrapper-counter*))))
+  (let* ((wrapper-id (sb-thread:with-mutex (*std-function-wrapper-lock*)
+                       (incf *std-function-wrapper-counter*))))
 
-     ;; Define the C callback that will invoke the Lisp function. We don't
-     ;; bind its return value to a local variable because the symbol
-     ;; `std-function-c-callback` is the name used to obtain a pointer below.
-     (cffi:defcallback std-function-c-callback :void
-       ((qvariant-ptr :pointer)
-        (user-data :pointer))
-       (declare (ignore user-data))
-       (handler-case
-           (let ((result (qt::%qobject (qt::find-qclass "QVariant") qvariant-ptr)))
-             (funcall lisp-callback result))
-         (error (e)
-           (format t "[std-function-c-callback] Error invoking Lisp callback: ~a~%" e))))
+    ;; Define the C callback that will invoke the Lisp function. We don't
+    ;; bind its return value to a local variable because the symbol
+    ;; `std-function-c-callback` is the name used to obtain a pointer below.
+    (cffi:defcallback std-function-c-callback :void
+        ((qvariant-ptr :pointer)
+         (user-data :pointer))
+      (declare (ignore user-data))
+      (let ((result (qt::%qobject (qt::find-qclass "QVariant") qvariant-ptr)))
+        (funcall lisp-callback result)))
 
-     ;; Convert the C callback to a pointer and create the wrapper
-     (let* ((c-callback-ptr (cffi:callback std-function-c-callback))
-            (wrapper-ptr (create-std-function-wrapper c-callback-ptr
-                                                      (cffi:make-pointer wrapper-id))))
+    ;; Convert the C callback to a pointer and create the wrapper
+    (let* ((c-callback-ptr (cffi:callback std-function-c-callback))
+           (wrapper-ptr (create-std-function-wrapper c-callback-ptr
+                                                     (cffi:make-pointer wrapper-id))))
 
-       ;; Store the Lisp callback and C callback pointer for later cleanup
-       (sb-thread:with-mutex (*std-function-wrapper-lock*)
-         (setf (gethash wrapper-id *std-function-wrappers*)
-               (list lisp-callback c-callback-ptr wrapper-ptr)))
+      ;; Store the Lisp callback and C callback pointer for later cleanup
+      (sb-thread:with-mutex (*std-function-wrapper-lock*)
+        (setf (gethash wrapper-id *std-function-wrappers*)
+              (list lisp-callback c-callback-ptr wrapper-ptr)))
 
       (values wrapper-ptr wrapper-id))))
 

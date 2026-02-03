@@ -31,7 +31,6 @@
 
 ;;; Create a QApplication from command line arguments.
 ;;;
-
 ;;; Usually, programs just pass argc and argv from their `main' function here.
 ;;; We take a Lisp list and set up a fresh argv array.
 ;;;

@@ -271,8 +271,7 @@ Smoke modules known to Lisp."
                   :format-args (list name)))))))
 
 (defun find-qclass-in-module (<module> name &optional (allow-external t))
-  ;; <module> may be NIL in some caller paths; allow NIL to avoid SBCL style warnings
-  (declare (type (or null module-number) <module>))
+  (declare (type module-number <module>))
   (let ((index (the index-iterator
                  (sw_id_class (module-ref <module>)
                               name

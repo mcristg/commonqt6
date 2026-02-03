@@ -1,152 +1,180 @@
-# CommonQt for Qt5
+# CommonQt for Qt6 (target: Qt 6.11)
 
-This is a version of CommonQt adapted for Qt5. It uses the same
-package names as the original CommonQt for Qt4, therefore the two
-cannot be loaded simultaneously.
+This is a version of CommonQt adapted for Qt6.
+
+CommonQt is a set of Common Lisp bindings for the Qt application framework.
+It is based on the Smoke and SmokeQt libraries, which provide a bridge between C++ and Common Lisp.
 
 ## Building CommonQt on Windows
 
 ### Initial Setup
 
-  1. Ensure you have the following tools accessible via PATH
-     (https://doc.qt.io/qt-5/windows-requirements.html):
+1. Ensure you have the following tools accessible via PATH (<https://doc.qt.io/qt-6/windows-building.html#step-2-installing-build-requirements-and-set-environment>):
 
-    * jom (1.1.3 works)
-    * ninja (v1.10.2 works)
-    * Ruby (2.7.3 works)
-    * Python 2.7
-    * bison and flex 2.5.5
-    * gnuwin32
-    * GPerf
-    * xmlstarlet 1.6.1
-    * Visual Studio 2019 Community edition
+    - Qt sources: target Qt 6.11
+    - Ninja: 1.12.0 (recommended)
+    - CMake: 3.22+
+    - Python 3: 3.8+
+        - html5lib
+        - spdx-tools
+    - Node.js: 20+
+    - GNU Bison & Flex (or Win Flex-Bison port)
+        - Bison >= 2.7 (recommended 3.7+)
+        - Flex >= 2.5.35 (recommended 3.6.4+)
+    - gnuwin32
+    - GPerf
+    - xmlstarlet: 1.6.1
+    - Visual Studio 2022 Community Edition
+        - C++ Desktop Development Kit
+        - MSVC toolset 2022 (cl.exe)
+        - Windows 11 SDK (10.0.17763+)
 
-  2. Make sure the directory that contains `win_bison.exe` and
-     `win_flex.exe` has priority over `gnuwin32` in the `PATH`
-     environment variable.
+2. Make sure the directory that contains `win_bison.exe` and `win_flex.exe` has priority over gnuwin32 in the `PATH` environment variable.
 
-  3. Copy or rename `win_bison.exe` and `win_flex.exe` to `bison.exe`
-     and `flex.exe`.
+3. Copy or rename `win_bison.exe` and `win_flex.exe` to `bison.exe` and `flex.exe`.
 
-  4. Add the `qt-install\bin` directory to the beginning of the PATH
-     environment variable, it's where `moc.exe` and Qt's DLLs are
-     installed.
+4. Add the qt-install\bin directory to the beginning of the PATH environment variable; it's where moc.exe and Qt's DLLs are installed.
 
 ### Compiling Non-Lisp Dependencies
 
-Every project listed below should be compiled using "x64 Native Tools
-Command Prompt for VS 2019" cmd.
+Every project listed below should be compiled using "x64 Native Tools Command Prompt for VS 2022" cmd.
+The suggested commands use Ninja as a generator. It can be replaced with VS solution files by changing the `-G` argument in CMake commands.
+Ninja is preferred as it is faster.
+Follow the order of the projects as some depend on others.
 
-#### llvm
-Repo: https://github.com/llvm/llvm-project, branch: 11.x.x
+#### LLVM
+
+Repo: <https://github.com/llvm/llvm-project>
+
+Branch: release/19.x
+
 ```
 mkdir build && cd build
-cmake ../llvm -G "Visual Studio 16 2019" -DLLVM_ENABLE_PROJECTS=clang;llvm;openmp -DCMAKE_INSTALL_PREFIX=%cd%\..\..\llvm-install -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_INCLUDE_TESTS=Off -DLLVM_INCLUDE_EXAMPLES=Off -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_CXX_STANDARD=14
-msbuild ALL_BUILD.vcxproj -maxcpucount:4 /p:Configuration=RelWithDebInfo
-msbuild INSTALL.vcxproj -maxcpucount:4 /p:Configuration=RelWithDebInfo
+cmake ../llvm -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_PROJECTS=clang;lld -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_ENABLE_ASSERTIONS=ON -DCMAKE_INSTALL_PREFIX=%cd%\..\..\llvm-install -DCMAKE_CXX_STANDARD=17 -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
+ninja -j 6
+ninja install
 ```
 
 #### qtbase
-Repo: https://github.com/qt/qtbase, branch: 5.14.2	
+
+Repo: <https://code.qt.io/cgit/qt/qtbase.git>
+
+Branch: 6.11
+
 ```
-configure -opensource -release -platform win32-msvc -nomake tests -nomake examples -c++std c++14 -no-dbus -prefix %cd%\..\qt-install -confirm-license -force-debug-info
-..\tools\jom\jom.exe -j 6
+configure -opensource -release -platform win32-msvc -nomake tests -nomake examples -- -DCMAKE_CXX_STANDARD=17 -DFEATURE_gui=ON -DFEATURE_widgets=ON -DFEATURE_dbus=OFF -DCMAKE_INSTALL_PREFIX=%QT_INSTALL_PREFIX% -GNinja
+ninja -j 6
+ninja install
+```
+
+#### qtshadertools
+
+Repo: <https://code.qt.io/qt/qtshadertools.git>
+
+Branch: 6.11
+
+```
+ninja -j 6 && ninja install
 ```
 
 #### qtdeclarative
-Repo: https://github.com/qt/qtdeclarative, branch: 5.14.2	
-```
-qmake && nmake && nmake install
-```
 
-#### qtquickcontrols2
-Repo: https://github.com/qt/qtquickcontrols2, branch: 5.14.2	
-```
-qmake && nmake && nmake install
-```
+Repo: <https://code.qt.io/cgit/qt/qtdeclarative.git>
 
-#### qtwebchannel
-Repo: https://github.com/qt/qtwebchannel, branch: 5.14.2	
+Branch: 6.11
+
 ```
-qmake && nmake && nmake install
+ninja -j 6 && ninja install
 ```
 
 #### qtwebsockets
-Repo: https://github.com/qt/qtwebsockets, branch: 5.14.2	
+
+Repo: <https://code.qt.io/cgit/qt/qtwebsockets.git>
+
+Branch: 6.11
+
 ```
-qmake && nmake && nmake install
+ninja -j 6 && ninja install
+```
+
+#### qtwebchannel
+
+Repo: <https://code.qt.io/cgit/qt/qtwebchannel.git>
+
+Branch: 6.11
+
+```
+ninja -j 6 && ninja install
 ```
 
 #### qtwebengine
-Repo: https://github.com/qt/qtwebengine, branch: 5.14.2	
+
+Repo: <https://code.qt.io/cgit/qt/qtwebengine.git>
+
+Branch: 6.11
+
 ```
-qmake -r && nmake && nmake install
+ninja -j 4 && ninja install
 ```
 
 #### qtsvg
-Repo: https://github.com/qt/qtsvg, branch: 5.14.2
-```	
-qmake && nmake && nmake install
+
+Repo: <https://code.qt.io/cgit/qt/qtsvg.git>
+
+Branch: 6.11
+
+```
+ninja -j 6 && ninja install
 ```
 
 #### smokegen
-Repo: https://github.com/commonqt/smokegen, branch: clang	
+
+Repo: <https://github.com/commonqt/smokegen>
+
+Branch: clang
+
 ```
 mkdir build && cd build
-cmake .. -G "Visual Studio 16 2019" -DCMAKE_INSTALL_PREFIX=%cd%\..\..\smokegen-install -DQt5_DIR="%cd%\..\..\qtbase" -DCMAKE_BUILD_TYPE=Release
-msbuild ALL_BUILD.vcxproj -maxcpucount:4 /p:Configuration=Release
-msbuild INSTALL.vcxproj -maxcpucount:4 /p:Configuration=Release
+cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=..\smokegen-install -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DSMOKE_QT_VERSION=6 -DQt6_DIR=..\qt-install\lib\cmake\Qt6 -DLLVM_DIR=..\llvm-install\lib\cmake\llvm ..\smokegen
+ninja -j 6
+ninja install
 ```
 
 #### smokeqt
-Repo: https://github.com/commonqt/smokeqt, branch: qt5	
+
+Repo: <https://github.com/commonqt/smokeqt>
+
+Branch: qt6
+
 ```
 mkdir build && cd build
-cmake .. -G "Visual Studio 16 2019" -DCMAKE_INSTALL_PREFIX=%cd%\..\..\smokeqt-install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
-msbuild ALL_BUILD.vcxproj -maxcpucount:4 /p:Configuration=Release /t:Rebuild
-msbuild INSTALL.vcxproj -maxcpucount:4 /p:Configuration=Release
+cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=..\smokeqt-install -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DSMOKE_QT_VERSION=6 -DQt6_DIR=..\qt-install\lib\cmake\Qt6 -DLLVM_DIR=..\llvm-install\lib\cmake\llvm
+ninja -j 6
+ninja install
 ```
 
-### Notes
+#### CommonQt
 
-* `CMAKE_INSTALL_PREFIX` and `-prefix` (for compiling qtbase) indicate
-  the installation directory. Ensure that all those directories are
-  included in the `PATH` environment variable.
+Repo: <https://github.com/commonqt/commonqt6>
 
-* Compiling LLVM takes several GB of space, ensure that there is at
-  least 30GB of free space.
+Branch: master
 
-* The configure step of `qtbase` will set the definitions for all
-  other Qt projects.
+```
+mkdir build && cd build
+cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="Z:\siscog\qt6\commonqt-install" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DSMOKE_QT_VERSION=6 -DQt6_DIR="Z:\siscog\qt6\qt-install\lib\cmake\Qt6" -DQt_ROOT_DIR="Z:\siscog\qt6\qt-install" -DSMOKE_BASE="Z:\siscog\qt6\smokegen-install" -DSMOKE_QT="Z:\siscog\qt6\smokeqt-install"
+ninja -j 6
+ninja install​
+```
 
-* Every project must be compile in the same configuration: DEBUG or
-  RELEASE.
+#### Notes
 
-* Qt, LLVM and smokegen **must be** compiled in RELEASE mode. The
-  reason why is that Qt5 on windows differentiate the debug vs release
-  dlls by a suffix letter, e.g. Qt5Core.dll (release) vs Qt5Cored.dll
-  (debug). smokegen and smokeqt are not capable of coping with such
-  difference. When migrating to Qt6, this will not be a problem as the
-  suffix letter was dropped.
+- CMAKE_INSTALL_PREFIX and -prefix (for compiling qtbase) indicate the installation directory. Ensure that all those directories are included in the PATH environment variable.
 
-* While compiling LLVM openmp, an error about "setlocal" and missing
-  copy files may occur. To work around it:
-  - Go to `llvm-project\build\bin\Debug` and move `libomp.dll` to
-    `llvm-project\build\bin\`;
-  - Go to `llvm-project\build\lib\Debug` and move `libomp.dll.lib` to
-    `llvm-project\build\lib`;
-  - Go to `llvm-project\build\lib\Debug` and move `libomp.lib` to
-    `llvm-project\build\lib`;
-  - Run build Again
+- Compiling LLVM takes several GB of space, ensure that there is at least 30GB of free space.
 
-* Visual Studio 2019.8.1 has a bug
-  (https://github.com/microsoft/STL/issues/1300) that can be fixed
-  using [this patch](https://common-lisp.net/~loliveira/patches/vs2019.8.1.diff):
+- The configure step of qtbase will set the definitions for all other Qt projects.
 
-  - Go to `C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29333\include`
-    and back up files `intrin.h` and `intrin0.h`.
-  - `git apply --unsafe-paths -p6 --directory="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29333\include" vs2019.8.1.diff`
+- Every project must be compile in the same configuration: DEBUG or RELEASE.
 
-## CommonQt
-
-TODO: The qt-libs project has not yet been adapted to commonqt5.
+- Qt, LLVM and SmokeGen MUST BE compiled in RELEASE!
+The reason is that, on Windows, Qt6 differentiates the debug vs. release DLLs by a suffix letter, e.g., Qt6Core.dll (release) vs. Qt6Cored.dll (debug). The remaining projects, such as smokegen and smokeqt, are not capable of coping with such differences.

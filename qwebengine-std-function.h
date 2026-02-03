@@ -22,37 +22,38 @@
 #include <QVariant>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/*
- * Create a std::function<void(const QVariant&)> wrapper.
- *
- * Args:
- *   c_callback: C function pointer void (*)(const QVariant*, void*)
- *   user_data: opaque pointer passed to c_callback as second argument
- *
- * Returns: opaque pointer to a std::function object (heap-allocated)
- *
- * The returned pointer must be freed with destroy_std_function_wrapper() after use.
- */
-EXPORT void* create_std_function_wrapper(void (*c_callback)(const QVariant*, void*),
-                                   void* user_data);
+    /*
+     * Create a std::function<void(const QVariant&)> wrapper.
+     *
+     * Args:
+     *   c_callback: C function pointer void (*)(const QVariant*, void*)
+     *   user_data: opaque pointer passed to c_callback as second argument
+     *
+     * Returns: opaque pointer to a std::function object (heap-allocated)
+     *
+     * The returned pointer must be freed with destroy_std_function_wrapper() after use.
+     */
+    EXPORT void *create_std_function_wrapper(void (*c_callback)(const QVariant *, void *),
+                                             void *user_data);
 
-/*
- * Free a std::function wrapper created by create_std_function_wrapper().
- *
- * Args:
- *   wrapper_ptr: opaque pointer returned from create_std_function_wrapper()
- */
-EXPORT void destroy_std_function_wrapper(void* wrapper_ptr);
+    /*
+     * Free a std::function wrapper created by create_std_function_wrapper().
+     *
+     * Args:
+     *   wrapper_ptr: opaque pointer returned from create_std_function_wrapper()
+     */
+    EXPORT void destroy_std_function_wrapper(void *wrapper_ptr);
 
-/*
- * Get the std::function<void(const QVariant&)>* pointer from a wrapper.
- *
- * Used internally by the marshalling code to pass to Qt.
- */
-EXPORT std::function<void(const QVariant&)>* get_std_function_ptr(void* wrapper_ptr);
+    /*
+     * Get the std::function<void(const QVariant&)>* pointer from a wrapper.
+     *
+     * Used internally by the marshalling code to pass to Qt.
+     */
+    EXPORT std::function<void(const QVariant &)> *get_std_function_ptr(void *wrapper_ptr);
 
 #ifdef __cplusplus
 }

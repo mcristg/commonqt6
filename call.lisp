@@ -152,7 +152,6 @@
   `(setf (gethash ,type *marshalling-tests*)
          #'(lambda (,var) ,@body)))
 
-;; Register marshalling test so can-marshal-p knows strings can be marshalled to QAnyStringView
 (define-marshalling-test (value :|QAnyStringView|)
   (stringp value))
 
