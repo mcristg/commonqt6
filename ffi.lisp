@@ -34,8 +34,7 @@
 (defun load-libcommonqt ()
   (unless *library-loaded-p*
     (progn
-      #-qt6(load-library "commonqt")
-      #+qt6(load-library "commonqt6")
+      (load-library "commonqt6")
       (setf *library-loaded-p* t))))
 
 #-(or ecl ccl sbcl allegro)

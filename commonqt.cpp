@@ -4,11 +4,7 @@
 //
 #include <smoke.h>
 #include <QtCore>
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
 #include <smoke/qt6core_smoke.h>
-#else
-#include <smoke/qtcore_smoke.h>
-#endif
 #include <private/qmetaobjectbuilder_p.h>
 #include <QtGui>
 #include <QtWidgets>
@@ -353,11 +349,7 @@ extern "C" {
 EXPORT void
 sw_find_class(char* name, Smoke** smoke, short* index)
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
     Smoke::ModuleIndex mi = qt6core_Smoke->findClass(name);
-#else
-    Smoke::ModuleIndex mi = qtcore_Smoke->findClass(name);
-#endif
     *smoke = mi.smoke;
     *index = mi.index;
 }
@@ -366,11 +358,7 @@ EXPORT short
 sw_id_instance_class(void* ptr, Smoke** smoke, short* index)
 {
     const char* className = ((QObject*)ptr)->metaObject()->className();
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
     Smoke::ModuleIndex mi = qt6core_Smoke->findClass(className);
-#else
-    Smoke::ModuleIndex mi = qtcore_Smoke->findClass(className);
-#endif
     *smoke = mi.smoke;
     *index = mi.index;
     return mi.index;

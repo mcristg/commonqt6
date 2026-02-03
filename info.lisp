@@ -30,7 +30,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defconstant +index-bits+  16)
-  (defconstant +module-bits+  8) ;4)
+  (defconstant +module-bits+  8)
   (defconstant +kind-bits+    2))
 
 (deftype index         () `(unsigned-byte ,+index-bits+))
