@@ -78,6 +78,15 @@
 (defcfun "sw_qanystringview_ptr" :pointer
   (holder :pointer))
 
+(defcfun "sw_make_qbytearrayview" :pointer
+  (str (:string :encoding :utf-8)))
+
+(defcfun "sw_delete_qbytearrayview" :void
+  (holder :pointer))
+
+(defcfun "sw_qbytearrayview_ptr" :pointer
+  (holder :pointer))
+
 (defcfun "sw_qstringlist_new" :pointer)
 
 (defcfun "sw_qstringlist_delete" :void

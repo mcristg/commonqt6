@@ -284,6 +284,32 @@ sw_qanystringview_ptr(void* holder)
     return &(((QAnyStringViewHolder*)holder)->view);
 }
 
+// QByteArrayView support - store a QByteArray so the view remains valid
+struct QByteArrayViewHolder {
+    QByteArray arr;
+    QByteArrayView view;
+    QByteArrayViewHolder(const char* s) : arr(QByteArray(s)), view(arr) {}
+};
+
+void*
+sw_make_qbytearrayview(char* str)
+{
+    return new QByteArrayViewHolder(str);
+}
+
+void
+sw_delete_qbytearrayview(void* q)
+{
+    delete (QByteArrayViewHolder*)q;
+}
+
+// Helper to get the actual QByteArrayView pointer for marshalling
+void*
+sw_qbytearrayview_ptr(void* holder)
+{
+    return &(((QByteArrayViewHolder*)holder)->view);
+}
+
 void*
 sw_make_metaobject_builder(char* name, void* parent){
     QMetaObject* qParent = (QMetaObject*)parent;

@@ -155,6 +155,9 @@
 (define-marshalling-test (value :|QAnyStringView|)
   (stringp value))
 
+(define-marshalling-test (value :|QByteArrayView|)
+  (stringp value))
+
 (defun can-marshal-p (lisp-object <type>)
   (let ((slot (qtype-stack-item-slot <type>)))
     (alexandria:if-let ((test (gethash (qtype-interned-name
