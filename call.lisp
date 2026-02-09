@@ -139,8 +139,10 @@
     enum (or (unsigned-byte 32) enum)
     uint (or (unsigned-byte 32) enum)
     int (or (signed-byte 32) enum)
-    ulong (unsigned-byte 64) ;; FIXME
-    long (signed-byte 64)    ;; FIXME
+    ulong (unsigned-byte #+windows 32 #-windows 64)
+    long (signed-byte #+windows 32 #-windows 64)
+    ullong (unsigned-byte 64)
+    llong (signed-byte 64)
     ushort (unsigned-byte 16)
     short (signed-byte 16)
     float number

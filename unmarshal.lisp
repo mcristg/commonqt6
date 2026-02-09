@@ -60,7 +60,7 @@
                                                      ',',slot)))
                       ,@body)))
                 '(ptr bool char uchar short ushort int
-                  uint long ulong float double enum class))))
+                  uint long ulong llong ullong float double enum class))))
 
 (defun unmarshal (type stack-item &optional delete)
   (funcall (unmarshaller type) stack-item delete))
@@ -161,3 +161,9 @@
 
 (def-unmarshal (value "GLuint" type)
   (cffi:mem-ref value :unsigned-int))
+
+(def-unmarshal (value "llong&" type)
+  (cffi:mem-ref value :long-long))
+
+(def-unmarshal (value "ullong&" type)
+  (cffi:mem-ref value :unsigned-long-long))

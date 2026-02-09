@@ -279,6 +279,8 @@
   (uint :uint)
   (long :long)
   (ulong :ulong)
+  (llong :long-long)
+  (ullong :unsigned-long-long)
   (float :float)
   (double :double)
   (enum :int)

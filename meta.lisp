@@ -316,7 +316,8 @@ Should be used as an optimization."
 
 (defparameter *signal-type-translation*
   '(("uint" . "unsigned int")
-    ("ulong" . "unsigned long")))
+    ("ulong" . "unsigned long")
+    ("ullong" . "unsigned long long")))
 
 (defun find-signal-qtype (name)
   (let ((name (or (cdr (assoc name *signal-type-translation*

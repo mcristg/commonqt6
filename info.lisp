@@ -596,7 +596,7 @@ Smoke modules known to Lisp."
 
 (defun qtype-stack-item-slot (<type>)
   (elt #(ptr bool char uchar short ushort int uint long ulong float double
-         enum class)
+         enum class llong ullong)
        (logand #xf (qtype-flags <type>))))
 
 (defun qtype-kind (<type>)

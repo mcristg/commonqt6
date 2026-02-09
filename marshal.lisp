@@ -85,7 +85,7 @@
                            (macrolet ((,getter () `(si ,',slot)))
                              ,@body)))
                 '(ptr bool char uchar short ushort int
-                  uint long ulong float double enum class)))))
+                  uint long ulong llong ullong float double enum class)))))
     (let ((slot (qtype-stack-item-slot <type>)))
       (case slot
         (bool
@@ -134,7 +134,7 @@
          (lambda (val stack i)
            (setf (si double) (float val 1.0d0))))
         ;; that leaves:
-        ;;   ptr char uchar short ushort int uint long ulong
+        ;;   ptr char uchar short ushort int uint long ulong llong ullong
         (t
          (dispatching (%si slot)
                       (lambda (val stack i)
