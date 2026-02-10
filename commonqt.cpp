@@ -536,3 +536,19 @@ DEFINE_QLIST_SCALAR_MARSHALLER(QByteArray, qbytearray)
 DEFINE_QLIST_SCALAR_MARSHALLER(QModelIndex, qmodelindex)
 DEFINE_QLIST_SCALAR_MARSHALLER(QKeySequence, qkeysequence)
 DEFINE_QLIST_SCALAR_MARSHALLER(QTextEdit::ExtraSelection, extraselection)
+
+void*
+sw_create_std_function(void (*c_callback)(const QVariant *, int), int id)
+{
+    auto func = new std::function<void(const QVariant &)>([c_callback, id](const QVariant &result) {
+        c_callback(&result, id);
+    });
+
+    return static_cast<void *>(func);
+}
+
+void
+sw_destroy_std_function(void *function_ptr)
+{
+    delete static_cast<std::function<void(const QVariant &)> *>(function_ptr);
+}

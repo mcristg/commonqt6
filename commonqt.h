@@ -109,6 +109,9 @@ DECLARE_QLIST_SCALAR_MARSHALLER(qmodelindex)
 DECLARE_QLIST_SCALAR_MARSHALLER(qkeysequence)
 DECLARE_QLIST_SCALAR_MARSHALLER(extraselection)
 
+EXPORT void *sw_create_std_function(void (*)(const QVariant *, int), int);
+EXPORT void sw_destroy_std_function(void *);
+
 #ifdef __cplusplus
 }
 #endif

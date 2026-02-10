@@ -53,8 +53,7 @@ include_directories(${Qt_ROOT_DIR}/include/QtCore/${QT_CORE_VERSION}
 
 link_directories(${SMOKE_BASE}/lib ${SMOKE_QT}/lib)
 
-# Qt6: compile std::function bridge code into the main library
-set(COMMONQT_SOURCES commonqt.cpp qwebengine-std-function.cpp)
+set(COMMONQT_SOURCES commonqt.cpp)
 
 add_library(${COMMONQT} SHARED ${COMMONQT_SOURCES})
 
