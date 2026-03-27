@@ -8,6 +8,7 @@
 
 (in-package :qt-tutorial-14)
 (named-readtables:in-readtable :qt)
+(ensure-smoke :qt6widgets)
 
 (defclass cannon-field ()
     ((current-angle :initform 45

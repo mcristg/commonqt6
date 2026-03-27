@@ -10,6 +10,7 @@
 
 (in-package :qt-conv)
 (named-readtables:in-readtable :qt)
+(ensure-smoke :qt6widgets)
 
 (defvar *qapp*)
 
