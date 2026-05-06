@@ -987,13 +987,32 @@ Smoke modules known to Lisp."
     ;; Ensure we have qt6 (not qt) in the name
     (ppcre:regex-replace "^qt(?!6)" n "qt6")))
 
+;; ecl bug: fails to load the same library more than once, DFFI.
+;; (si:load-foreign-module "commonqt6.dll")
+;; Condition of type: SIMPLE-TYPE-ERROR
+;; In function STRING=, the value of the second argument is
+;;   #(99 111 109 109 111 110 113 116 54 46 100 108 108)
+;; which is not of the expected type STRING
+;; Available restarts:
+;; 1. (RESTART-TOPLEVEL) Go back to Top-Level REPL.
+;; Broken at STRING=. In: #<process TOP-LEVEL 0x2780f30>.
+#+ecl (defvar *smoke-libs* ())
+
 (defun ensure-smoke (name)
   (let* ((name (string-downcase name))
          (module-name (normalize-module-name name))
          ;; Build the library name: smokeqt6...
          (lib-name (format nil "smoke~a" module-name)))
-    (load-library lib-name)
-    (initialize-smoke module-name)))
+    #+ecl
+    (when (not (find lib-name *smoke-libs* :test  #'string=))
+      (load-library lib-name)
+      (let ((ret (initialize-smoke module-name)))
+        (when ret (push lib-name *smoke-libs*))
+        ret))
+    #-ecl
+    (progn
+      (load-library lib-name)
+      (initialize-smoke module-name))))
 
 (defun initialize-smoke (name)
   (ensure-loaded)
