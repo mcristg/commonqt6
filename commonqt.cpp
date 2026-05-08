@@ -530,7 +530,7 @@ sw_qlist_void_append(void* ptr, void* whatptr)
 DEFINE_QLIST_SCALAR_MARSHALLER(QPoint, qpoint)
 
 DEFINE_QLIST_SCALAR_MARSHALLER(int, int)
-//DEFINE_QLIST_SCALAR_MARSHALLER(QPrinter::PageSize,papersize)
+DEFINE_QLIST_SCALAR_MARSHALLER(QPageSize::PageSizeId,papersize)
 DEFINE_QLIST_SCALAR_MARSHALLER(QVariant, qvariant)
 DEFINE_QLIST_SCALAR_MARSHALLER(QByteArray, qbytearray)
 DEFINE_QLIST_SCALAR_MARSHALLER(QModelIndex, qmodelindex)
